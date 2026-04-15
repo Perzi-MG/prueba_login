@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 
 export type LoanItem = {
   productId: string;
@@ -118,13 +119,13 @@ export async function addItemsToLoan(
   const token = await getAuthToken();
 
   try {
-    const res = await fetch(`http://localhost:4000/loans/${loanId}`, {
+    const res = await fetch(`http://localhost:4000/loans/${loanId}/add-item`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ products: productIds }),
+      body: JSON.stringify({ productIds }),
     });
 
     if (!res.ok) {
@@ -133,6 +134,7 @@ export async function addItemsToLoan(
     }
 
     const loan: Loan = await res.json();
+    revalidatePath('/loan-request');
     return { success: true, loan };
   } catch {
     return { success: false, error: 'No se pudo conectar con el servidor' };
